@@ -14,34 +14,37 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.mtali.flashy2.ui.theme.Flashy2Theme
 
 class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            Flashy2Theme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    enableEdgeToEdge()
+    setContent {
+      Flashy2Theme {
+        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+          Greeting(
+            name = "Android",
+            modifier = Modifier.padding(innerPadding),
+          )
         }
+      }
     }
+  }
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
+fun Greeting(
+  name: String,
+  modifier: Modifier = Modifier,
+) {
+  Text(
+    text = "Hello $name!",
+    modifier = modifier,
+  )
 }
 
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-    Flashy2Theme {
-        Greeting("Android")
-    }
+  Flashy2Theme {
+    Greeting("Android")
+  }
 }
