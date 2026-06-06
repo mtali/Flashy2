@@ -53,7 +53,6 @@
   <string name="version_license">Apache License 2.0</string>
   <string name="about_tagline">A simple, modern flashlight for Android.</string>
   <string name="created_by">Created by Emmanuel Mtali</string>
-  <string name="based_on">Based on the open-source Flashy app (Apache 2.0)</string>
   <string name="contribute">Contribute</string>
   <string name="source_code">Source code</string>
   <string name="report_problem">Report a problem</string>

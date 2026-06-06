@@ -82,11 +82,6 @@ fun AboutRoute(
         modifier = Modifier.padding(top = 8.dp),
       )
       Text(stringResource(R.string.created_by), style = MaterialTheme.typography.bodyMedium)
-      Text(
-        stringResource(R.string.based_on),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-      )
 
       HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 
