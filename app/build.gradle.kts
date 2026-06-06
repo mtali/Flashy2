@@ -1,4 +1,5 @@
 import com.mtali.flashy2.Configuration
+import java.util.Properties
 
 plugins {
   alias(libs.plugins.android.application)
@@ -33,6 +34,19 @@ val resolvedVersionCode: Int =
       Configuration.versionCodeFor(Configuration.FALLBACK_VERSION_NAME)!!
     }
 
+// Release signing. Credentials come from a gitignored `keystore.properties` at the repo root
+// (local builds) or env vars (CI) — never from committed files. When neither is present the release
+// build falls back to default (debug) signing so `assembleRelease` still works for non-publish use.
+val keystoreProperties =
+  Properties().apply {
+    val file = rootProject.file("keystore.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+  }
+
+fun signingValue(propKey: String, envKey: String): String? = keystoreProperties.getProperty(propKey) ?: System.getenv(envKey)
+
+val hasReleaseSigning: Boolean = signingValue("storeFile", "KEYSTORE_PATH") != null
+
 android {
   namespace = "com.mtali.flashy2"
   compileSdk = Configuration.COMPILE_SDK
@@ -56,10 +70,24 @@ android {
     localeFilters += "en"
   }
 
+  signingConfigs {
+    create("release") {
+      if (hasReleaseSigning) {
+        storeFile = file(signingValue("storeFile", "KEYSTORE_PATH")!!)
+        storePassword = signingValue("storePassword", "KEYSTORE_PASSWORD")
+        keyAlias = signingValue("keyAlias", "KEY_ALIAS")
+        keyPassword = signingValue("keyPassword", "KEY_PASSWORD")
+      }
+    }
+  }
+
   buildTypes {
     release {
       isMinifyEnabled = true
       isShrinkResources = true
+      if (hasReleaseSigning) {
+        signingConfig = signingConfigs.getByName("release")
+      }
       proguardFiles(
         getDefaultProguardFile("proguard-android-optimize.txt"),
         "proguard-rules.pro",
