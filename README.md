@@ -3,6 +3,19 @@
 A simple, modern flashlight for Android. Use the camera torch or turn the whole screen into a
 colored light, with SOS Morse and stroboscope modes. Built with Jetpack Compose and Material 3.
 
+## Demo
+
+<p align="center">
+  <img src="screenshots/demo.gif" alt="Flashy in action" width="280" />
+</p>
+
+| Torch | Screen light | SOS | Settings |
+| :---: | :---: | :---: | :---: |
+| <img src="screenshots/torch.png" width="190" alt="Camera torch with brightness dial" /> | <img src="screenshots/screen-light.png" width="190" alt="Screen light with colour picker" /> | <img src="screenshots/sos.png" width="190" alt="SOS Morse signalling" /> | <img src="screenshots/settings.png" width="190" alt="Settings" /> |
+
+> The images above are placeholders — see [`screenshots/README.md`](screenshots/README.md) for the
+> one-command recipe to capture real device footage and drop it in.
+
 ## Features
 
 - **Camera torch** with brightness control on supported devices (Android 13+).
