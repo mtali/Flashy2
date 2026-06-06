@@ -9,6 +9,30 @@ plugins {
   alias(libs.plugins.hilt)
 }
 
+// Tag-driven versioning: a `vX.Y.Z` git tag is the source of truth. CI may pass VERSION_NAME
+// explicitly; otherwise we read the latest matching tag reachable from HEAD. Local builds with no
+// release tag fall back to Configuration.FALLBACK_VERSION_NAME. The versionCode is always derived
+// from the version name, never hand-edited.
+fun gitTagVersionName(): String? = try {
+  providers.exec {
+    commandLine("git", "describe", "--tags", "--abbrev=0", "--match", "v*")
+  }.standardOutput.asText.get().trim().removePrefix("v").ifBlank { null }
+} catch (_: Exception) {
+  null
+}
+
+val resolvedVersionName: String =
+  System.getenv("VERSION_NAME")?.trim()?.removePrefix("v")?.ifBlank { null }
+    ?: gitTagVersionName()
+    ?: Configuration.FALLBACK_VERSION_NAME
+
+val resolvedVersionCode: Int =
+  Configuration.versionCodeFor(resolvedVersionName)
+    ?: run {
+      logger.warn("Flashy: '$resolvedVersionName' is not SemVer; using fallback versionCode")
+      Configuration.versionCodeFor(Configuration.FALLBACK_VERSION_NAME)!!
+    }
+
 android {
   namespace = "com.mtali.flashy2"
   compileSdk = Configuration.COMPILE_SDK
@@ -17,8 +41,8 @@ android {
     applicationId = "com.mtali.flashy2"
     minSdk = Configuration.MIN_SDK
     targetSdk = Configuration.TARGET_SDK
-    versionCode = Configuration.VERSION_CODE
-    versionName = Configuration.VERSION_NAME
+    versionCode = resolvedVersionCode
+    versionName = resolvedVersionName
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     vectorDrawables {
