@@ -60,6 +60,23 @@ MVVM, package-by-feature, under `com.mtali.flashy2`:
 - The custom `CircularSlider` and `HsvColorPicker` replace third-party UI libraries — keep UI
   dependencies limited to Compose + Material 3.
 
-## Git
+## Git — branching & releases
 
-`main` is protected. Work on `develop` and open a PR `develop → main` to ship.
+Two long-lived branches: **`develop`** (integration — all development lands here) and **`main`**
+(releases only). `main` is protected.
+
+```
+fix/* , feature/*  →  PR into develop   (squash-merge — collapses WIP into one tidy commit)
+develop            →  PR into main      (MERGE COMMIT, never squash) + tag vX.Y.Z = a release
+```
+
+- **Every change** starts as a short-lived branch off `develop` (`fix/…`, `feature/…`), and is
+  **squash-merged** back into `develop`.
+- **Releases** merge `develop → main` with a **merge commit** (or fast-forward) — **never squash**.
+  Squashing `develop → main` rewrites history into a new commit `develop` doesn't have, which makes
+  `develop` diverge from `main` and forces a re-baseline. A merge commit keeps `develop` a permanent
+  ancestor of `main` (`develop ⊆ main`), so they never diverge. Tag the release on `main`.
+- After a release, no resync is needed; just branch the next change off `develop` as usual.
+
+If `develop` ever does diverge from `main` (e.g. an accidental squash-merge of a release), re-baseline
+it once: `git checkout develop && git reset --hard origin/main && git push --force-with-lease origin develop`.
