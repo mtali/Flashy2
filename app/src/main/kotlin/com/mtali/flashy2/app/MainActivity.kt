@@ -11,7 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.mtali.flashy2.ui.theme.Flashy2Theme
+import com.mtali.flashy2.core.ui.theme.FlashyTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
     setContent {
-      Flashy2Theme {
+      FlashyTheme {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
           Greeting(
             name = "Android",
@@ -46,7 +46,7 @@ fun Greeting(
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-  Flashy2Theme {
+  FlashyTheme {
     Greeting("Android")
   }
 }
