@@ -1,18 +1,17 @@
 # Screenshots & demo
 
-The images referenced by the top-level `README.md` live here. The committed files are
-**placeholders** — replace them with real device captures (same filenames) and the README updates
-itself.
+The images referenced by the top-level `README.md` live here.
 
-Expected files:
+| File | What it shows |
+| --- | --- |
+| `demo.gif` | Sped-up walkthrough of the torch, screen-light, and SOS modes |
+| `torch.png` | Flashlight screen, torch on, brightness dial (dark theme) |
+| `screen-light.png` | Screen-light mode with the colour picker (dark theme) |
+| `sos.png` | SOS Morse mode active (dark theme) |
+| `settings.png` | Settings screen (dark theme) |
+| `play-store-icon-512.png` | 512×512 listing icon for the Play Console (not used by the app build) |
 
-| File | What to show | Suggested size |
-| --- | --- | --- |
-| `demo.gif` | ~8 s loop: torch on → screen-light colour change → SOS | ≤ 280 px wide, < 5 MB |
-| `torch.png` | Flashlight screen, torch on, brightness dial | phone portrait |
-| `screen-light.png` | Screen-light mode with the HSV colour picker | phone portrait |
-| `sos.png` | SOS Morse mode active | phone portrait |
-| `settings.png` | Settings screen | phone portrait |
+To refresh them, recapture on a device or emulator (same filenames) and the README updates itself.
 
 ## Capturing on a device or emulator
 
