@@ -20,8 +20,16 @@ Always run `spotlessApply` then `spotlessCheck` before committing — formatting
 (`.github/`). Indentation is 2 spaces.
 
 Toolchain: JDK 17, AGP 8.13.2, Gradle 8.13, Kotlin 2.2.10, `compileSdk`/`targetSdk` 36, `minSdk` 24.
-SDK levels and the version live in `buildSrc/.../Configuration.kt`; dependencies in
-`gradle/libs.versions.toml`.
+SDK levels live in `buildSrc/.../Configuration.kt`; dependencies in `gradle/libs.versions.toml`.
+
+### Versioning
+
+Versioning is **tag-driven** — don't hand-edit version numbers. A `vX.Y.Z` git tag is the source of
+truth; `app/build.gradle.kts` resolves `versionName` from `$VERSION_NAME` (CI) or the latest `v*`
+tag reachable from `HEAD`, falling back to `Configuration.FALLBACK_VERSION_NAME` for tagless local
+builds. `versionCode` is always derived via `Configuration.versionCodeFor()` as
+`MAJOR*10000 + MINOR*100 + PATCH` (so `1.4.2` -> `10402`); `MINOR`/`PATCH` must stay in `0..99`. To
+cut a version, tag it (`git tag vX.Y.Z`) — never bump a constant.
 
 ## Architecture
 
