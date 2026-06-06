@@ -53,16 +53,19 @@ constructor(
   override fun turnOn(strength: Int?) {
     val manager = cameraManager ?: return
     val id = flashCameraId ?: return
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && supportsStrength && strength != null) {
-      manager.turnOnTorchWithStrengthLevel(id, strength.coerceIn(1, maxStrength))
-    } else {
-      manager.setTorchMode(id, true)
+    // Swallow CameraAccessException (e.g. camera in use) so the blink loops never crash.
+    runCatching {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && supportsStrength && strength != null) {
+        manager.turnOnTorchWithStrengthLevel(id, strength.coerceIn(1, maxStrength))
+      } else {
+        manager.setTorchMode(id, true)
+      }
     }
   }
 
   override fun turnOff() {
     val manager = cameraManager ?: return
     val id = flashCameraId ?: return
-    manager.setTorchMode(id, false)
+    runCatching { manager.setTorchMode(id, false) }
   }
 }

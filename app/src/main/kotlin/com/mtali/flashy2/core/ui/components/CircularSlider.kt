@@ -40,6 +40,7 @@ fun CircularSlider(
   value: Float,
   onValueChange: (Float) -> Unit,
   modifier: Modifier = Modifier,
+  onValueChangeFinished: (() -> Unit)? = null,
   enabled: Boolean = true,
   trackColor: Color = Color(0xFFF3F3F7),
   progressColor: Color = FlashyAmber,
@@ -73,6 +74,7 @@ fun CircularSlider(
             Modifier.pointerInput(Unit) {
               detectDragGestures(
                 onDragStart = { offset -> onValueChange(positionToValue(offset)) },
+                onDragEnd = { onValueChangeFinished?.invoke() },
               ) { change, _ -> onValueChange(positionToValue(change.position)) }
             }
           } else {

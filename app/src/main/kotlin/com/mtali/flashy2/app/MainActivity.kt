@@ -1,16 +1,11 @@
 package com.mtali.flashy2.app
 
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import com.mtali.flashy2.app.ui.FlashyApp
 import com.mtali.flashy2.core.ui.theme.FlashyTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -19,34 +14,12 @@ class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     enableEdgeToEdge()
+    // Keep the screen awake while the app is in the foreground (it is a light, after all).
+    window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     setContent {
       FlashyTheme {
-        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-          Greeting(
-            name = "Android",
-            modifier = Modifier.padding(innerPadding),
-          )
-        }
+        FlashyApp()
       }
     }
-  }
-}
-
-@Composable
-fun Greeting(
-  name: String,
-  modifier: Modifier = Modifier,
-) {
-  Text(
-    text = "Hello $name!",
-    modifier = modifier,
-  )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-  FlashyTheme {
-    Greeting("Android")
   }
 }
