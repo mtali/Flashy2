@@ -23,6 +23,12 @@ Toolchain: JDK 17, AGP 8.13.2, Gradle 8.13, Kotlin 2.2.10, `compileSdk`/`targetS
 SDK levels and the version live in `buildSrc/.../Configuration.kt`; dependencies in
 `gradle/libs.versions.toml`.
 
+The `release` build type is **minified** (R8 + `shrinkResources`). Because Navigation 3 serializes
+the `@Serializable` NavKeys for back-stack state, `proguard-rules.pro` keeps kotlinx.serialization —
+don't remove those rules. R8 writes `app/build/outputs/mapping/release/mapping.txt`; upload it with
+each release to de-obfuscate crash traces. Lint runs as a fatal gate on release
+(`lintVitalRelease`), so keep translations in sync with the default locale.
+
 ## Architecture
 
 MVVM, package-by-feature, under `com.mtali.flashy2`:
