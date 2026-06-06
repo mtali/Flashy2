@@ -1,3 +1,4 @@
+import com.github.triplet.gradle.androidpublisher.ReleaseStatus
 import com.mtali.flashy2.Configuration
 
 plugins {
@@ -7,6 +8,7 @@ plugins {
   alias(libs.plugins.kotlin.serialization)
   alias(libs.plugins.ksp)
   alias(libs.plugins.hilt)
+  alias(libs.plugins.play.publisher)
 }
 
 android {
@@ -26,6 +28,19 @@ android {
     }
   }
 
+  signingConfigs {
+    create("release") {
+      // Supplied by CI through env vars; absent locally so debug builds keep working without a
+      // keystore. The keystore itself never lives in the repo.
+      System.getenv("KEYSTORE_PATH")?.let { path ->
+        storeFile = file(path)
+        storePassword = System.getenv("KEYSTORE_PASSWORD")
+        keyAlias = System.getenv("KEY_ALIAS")
+        keyPassword = System.getenv("KEY_PASSWORD")
+      }
+    }
+  }
+
   buildTypes {
     release {
       isMinifyEnabled = false
@@ -33,6 +48,11 @@ android {
         getDefaultProguardFile("proguard-android-optimize.txt"),
         "proguard-rules.pro",
       )
+      // Only sign with the upload key when CI provided it; otherwise fall back to the default
+      // (debug) signing so a plain `assembleRelease` still succeeds locally.
+      if (System.getenv("KEYSTORE_PATH") != null) {
+        signingConfig = signingConfigs.getByName("release")
+      }
     }
   }
   compileOptions {
@@ -43,6 +63,16 @@ android {
     compose = true
     buildConfig = true
   }
+}
+
+// Gradle Play Publisher. The release workflow runs `publishReleaseBundle`, which builds the signed
+// AAB and uploads it. Service-account credentials are read from the ANDROID_PUBLISHER_CREDENTIALS
+// env var in CI (raw JSON), so nothing secret is committed. Promote internal -> production in the
+// Play Console, or change `track` here.
+play {
+  track.set("internal")
+  defaultToAppBundles.set(true)
+  releaseStatus.set(ReleaseStatus.COMPLETED)
 }
 
 dependencies {

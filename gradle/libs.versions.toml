@@ -20,6 +20,7 @@ coroutines = "1.10.2"
 truth = "1.4.5"
 turbine = "1.2.1"
 robolectric = "4.16"
+play-publisher = "3.12.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -71,3 +72,4 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+play-publisher = { id = "com.github.triplet.play", version.ref = "play-publisher" }

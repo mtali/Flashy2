@@ -1,0 +1,80 @@
+name: Release
+
+# Runs on every push to main (a release, per the develop -> main merge-commit convention).
+# If the version in Configuration.kt isn't tagged yet, it builds the signed AAB, publishes it to
+# the Play internal track, then tags the commit and cuts a GitHub Release. Non-version commits to
+# main (the tag already exists) are skipped, so this is safe to run on every push.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Read app version
+        id: version
+        run: |
+          CONFIG=buildSrc/src/main/kotlin/com/mtali/flashy2/Configuration.kt
+          VERSION=$(grep -oP 'VERSION_NAME = "\K[^"]+' "$CONFIG")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if already released
+        id: check
+        run: |
+          if git rev-parse -q --verify "refs/tags/${{ steps.version.outputs.tag }}" >/dev/null; then
+            echo "already released ${{ steps.version.outputs.tag }} — skipping"
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-java@v4
+        if: steps.check.outputs.release == 'true'
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        if: steps.check.outputs.release == 'true'
+
+      - name: Decode upload keystore
+        if: steps.check.outputs.release == 'true'
+        run: echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/upload.keystore"
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+
+      - name: Verify, build and publish to Play (internal track)
+        if: steps.check.outputs.release == 'true'
+        run: ./gradlew spotlessCheck testDebugUnitTest publishReleaseBundle
+        env:
+          KEYSTORE_PATH: ${{ runner.temp }}/upload.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          ANDROID_PUBLISHER_CREDENTIALS: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+
+      - name: Tag and create GitHub Release
+        if: steps.check.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git tag "${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+          gh release create "${{ steps.version.outputs.tag }}" \
+            --title "${{ steps.version.outputs.tag }}" \
+            --generate-notes

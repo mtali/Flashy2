@@ -1,0 +1,68 @@
+name: Prepare Release
+
+# Manual trigger. Bumps the version in Configuration.kt on develop and opens the develop -> main
+# release PR. Merge that PR (as a merge commit, never squash) to cut the release — the Release
+# workflow then publishes to Play and tags. This is the only step you trigger by hand; reviewing
+# and merging the PR is the release gate that keeps main protected.
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Which part of the semantic version to bump
+        type: choice
+        default: patch
+        options: [patch, minor, major]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0
+
+      - name: Bump version in Configuration.kt
+        id: bump
+        run: |
+          CONFIG=buildSrc/src/main/kotlin/com/mtali/flashy2/Configuration.kt
+          MAJOR=$(grep -oP 'MAJOR_VERSION = \K[0-9]+' "$CONFIG")
+          MINOR=$(grep -oP 'MINOR_VERSION = \K[0-9]+' "$CONFIG")
+          PATCH=$(grep -oP 'PATCH_VERSION = \K[0-9]+' "$CONFIG")
+          CODE=$(grep -oP 'VERSION_CODE = \K[0-9]+' "$CONFIG")
+          case "${{ inputs.bump }}" in
+            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH + 1)) ;;
+          esac
+          CODE=$((CODE + 1))
+          VERSION="$MAJOR.$MINOR.$PATCH"
+          sed -i \
+            -e "s/MAJOR_VERSION = [0-9]\+/MAJOR_VERSION = $MAJOR/" \
+            -e "s/MINOR_VERSION = [0-9]\+/MINOR_VERSION = $MINOR/" \
+            -e "s/PATCH_VERSION = [0-9]\+/PATCH_VERSION = $PATCH/" \
+            -e "s/VERSION_CODE = [0-9]\+/VERSION_CODE = $CODE/" \
+            "$CONFIG"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "code=$CODE" >> "$GITHUB_OUTPUT"
+
+      - name: Commit bump to develop and open release PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore: release v${{ steps.bump.outputs.version }} (versionCode ${{ steps.bump.outputs.code }})"
+          git push origin develop
+          gh pr create \
+            --base main \
+            --head develop \
+            --title "Release v${{ steps.bump.outputs.version }}" \
+            --body "Version bump to v${{ steps.bump.outputs.version }} (versionCode ${{ steps.bump.outputs.code }}).
+
+          Merge with a **merge commit** (never squash) to cut the release. The Release workflow then publishes the signed AAB to the Play internal track and tags v${{ steps.bump.outputs.version }}."

@@ -10,3 +10,9 @@ build/
 .cxx
 local.properties
 .migration/
+
+# Release signing & Play credentials — never commit
+*.keystore
+*.jks
+play-service-account.json
+*-service-account.json
