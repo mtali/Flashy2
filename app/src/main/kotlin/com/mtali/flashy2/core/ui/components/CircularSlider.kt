@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +52,12 @@ fun CircularSlider(
 ) {
   var layoutSize by remember { mutableStateOf(Size.Zero) }
 
+  // The gesture pipeline below is keyed on Unit, so it captures these lambdas only once. Route
+  // through rememberUpdatedState so a mode switch (e.g. torch -> screen) is always seen by the
+  // live drag handler instead of the lambda from first composition.
+  val currentOnValueChange by rememberUpdatedState(onValueChange)
+  val currentOnValueChangeFinished by rememberUpdatedState(onValueChangeFinished)
+
   fun positionToValue(position: Offset): Float {
     val center = Offset(layoutSize.width / 2f, layoutSize.height / 2f)
     var angle = Math.toDegrees(atan2((position.y - center.y).toDouble(), (position.x - center.x).toDouble())).toFloat()
@@ -73,9 +80,9 @@ fun CircularSlider(
           if (enabled) {
             Modifier.pointerInput(Unit) {
               detectDragGestures(
-                onDragStart = { offset -> onValueChange(positionToValue(offset)) },
-                onDragEnd = { onValueChangeFinished?.invoke() },
-              ) { change, _ -> onValueChange(positionToValue(change.position)) }
+                onDragStart = { offset -> currentOnValueChange(positionToValue(offset)) },
+                onDragEnd = { currentOnValueChangeFinished?.invoke() },
+              ) { change, _ -> currentOnValueChange(positionToValue(change.position)) }
             }
           } else {
             Modifier
