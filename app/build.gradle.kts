@@ -1,4 +1,5 @@
 import com.mtali.flashy2.Configuration
+import java.util.Properties
 
 plugins {
   alias(libs.plugins.android.application)
@@ -9,6 +10,43 @@ plugins {
   alias(libs.plugins.hilt)
 }
 
+// Tag-driven versioning: a `vX.Y.Z` git tag is the source of truth. CI may pass VERSION_NAME
+// explicitly; otherwise we read the latest matching tag reachable from HEAD. Local builds with no
+// release tag fall back to Configuration.FALLBACK_VERSION_NAME. The versionCode is always derived
+// from the version name, never hand-edited.
+fun gitTagVersionName(): String? = try {
+  providers.exec {
+    commandLine("git", "describe", "--tags", "--abbrev=0", "--match", "v*")
+  }.standardOutput.asText.get().trim().removePrefix("v").ifBlank { null }
+} catch (_: Exception) {
+  null
+}
+
+val resolvedVersionName: String =
+  System.getenv("VERSION_NAME")?.trim()?.removePrefix("v")?.ifBlank { null }
+    ?: gitTagVersionName()
+    ?: Configuration.FALLBACK_VERSION_NAME
+
+val resolvedVersionCode: Int =
+  Configuration.versionCodeFor(resolvedVersionName)
+    ?: run {
+      logger.warn("Flashy: '$resolvedVersionName' is not SemVer; using fallback versionCode")
+      Configuration.versionCodeFor(Configuration.FALLBACK_VERSION_NAME)!!
+    }
+
+// Release signing. Credentials come from a gitignored `keystore.properties` at the repo root
+// (local builds) or env vars (CI) — never from committed files. When neither is present the release
+// build falls back to default (debug) signing so `assembleRelease` still works for non-publish use.
+val keystoreProperties =
+  Properties().apply {
+    val file = rootProject.file("keystore.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+  }
+
+fun signingValue(propKey: String, envKey: String): String? = keystoreProperties.getProperty(propKey) ?: System.getenv(envKey)
+
+val hasReleaseSigning: Boolean = signingValue("storeFile", "KEYSTORE_PATH") != null
+
 android {
   namespace = "com.mtali.flashy2"
   compileSdk = Configuration.COMPILE_SDK
@@ -17,8 +55,8 @@ android {
     applicationId = "com.mtali.flashy2"
     minSdk = Configuration.MIN_SDK
     targetSdk = Configuration.TARGET_SDK
-    versionCode = Configuration.VERSION_CODE
-    versionName = Configuration.VERSION_NAME
+    versionCode = resolvedVersionCode
+    versionName = resolvedVersionName
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     vectorDrawables {
@@ -26,9 +64,30 @@ android {
     }
   }
 
+  // English-only app: also strip bundled library (AndroidX/Compose) translations from the APK so
+  // nothing falls back to a non-English locale.
+  androidResources {
+    localeFilters += "en"
+  }
+
+  signingConfigs {
+    create("release") {
+      if (hasReleaseSigning) {
+        storeFile = file(signingValue("storeFile", "KEYSTORE_PATH")!!)
+        storePassword = signingValue("storePassword", "KEYSTORE_PASSWORD")
+        keyAlias = signingValue("keyAlias", "KEY_ALIAS")
+        keyPassword = signingValue("keyPassword", "KEY_PASSWORD")
+      }
+    }
+  }
+
   buildTypes {
     release {
-      isMinifyEnabled = false
+      isMinifyEnabled = true
+      isShrinkResources = true
+      if (hasReleaseSigning) {
+        signingConfig = signingConfigs.getByName("release")
+      }
       proguardFiles(
         getDefaultProguardFile("proguard-android-optimize.txt"),
         "proguard-rules.pro",

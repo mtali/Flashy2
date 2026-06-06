@@ -20,8 +20,22 @@ Always run `spotlessApply` then `spotlessCheck` before committing — formatting
 (`.github/`). Indentation is 2 spaces.
 
 Toolchain: JDK 17, AGP 8.13.2, Gradle 8.13, Kotlin 2.2.10, `compileSdk`/`targetSdk` 36, `minSdk` 24.
-SDK levels and the version live in `buildSrc/.../Configuration.kt`; dependencies in
-`gradle/libs.versions.toml`.
+SDK levels live in `buildSrc/.../Configuration.kt`; dependencies in `gradle/libs.versions.toml`.
+
+### Versioning
+
+Versioning is **tag-driven** — don't hand-edit version numbers. A `vX.Y.Z` git tag is the source of
+truth; `app/build.gradle.kts` resolves `versionName` from `$VERSION_NAME` (CI) or the latest `v*`
+tag reachable from `HEAD`, falling back to `Configuration.FALLBACK_VERSION_NAME` for tagless local
+builds. `versionCode` is always derived via `Configuration.versionCodeFor()` as
+`MAJOR*10000 + MINOR*100 + PATCH` (so `1.4.2` -> `10402`); `MINOR`/`PATCH` must stay in `0..99`. To
+cut a version, tag it (`git tag vX.Y.Z`) — never bump a constant.
+
+The `release` build type is **minified** (R8 + `shrinkResources`). Because Navigation 3 serializes
+the `@Serializable` NavKeys for back-stack state, `proguard-rules.pro` keeps kotlinx.serialization —
+don't remove those rules. R8 writes `app/build/outputs/mapping/release/mapping.txt`; upload it with
+each release to de-obfuscate crash traces. Lint runs as a fatal gate on release
+(`lintVitalRelease`), so keep translations in sync with the default locale.
 
 ## Architecture
 
@@ -60,6 +74,23 @@ MVVM, package-by-feature, under `com.mtali.flashy2`:
 - The custom `CircularSlider` and `HsvColorPicker` replace third-party UI libraries — keep UI
   dependencies limited to Compose + Material 3.
 
-## Git
+## Git — branching & releases
 
-`main` is protected. Work on `develop` and open a PR `develop → main` to ship.
+Two long-lived branches: **`develop`** (integration — all development lands here) and **`main`**
+(releases only). `main` is protected.
+
+```
+fix/* , feature/*  →  PR into develop   (squash-merge — collapses WIP into one tidy commit)
+develop            →  PR into main      (MERGE COMMIT, never squash) + tag vX.Y.Z = a release
+```
+
+- **Every change** starts as a short-lived branch off `develop` (`fix/…`, `feature/…`), and is
+  **squash-merged** back into `develop`.
+- **Releases** merge `develop → main` with a **merge commit** (or fast-forward) — **never squash**.
+  Squashing `develop → main` rewrites history into a new commit `develop` doesn't have, which makes
+  `develop` diverge from `main` and forces a re-baseline. A merge commit keeps `develop` a permanent
+  ancestor of `main` (`develop ⊆ main`), so they never diverge. Tag the release on `main`.
+- After a release, no resync is needed; just branch the next change off `develop` as usual.
+
+If `develop` ever does diverge from `main` (e.g. an accidental squash-merge of a release), re-baseline
+it once: `git checkout develop && git reset --hard origin/main && git push --force-with-lease origin develop`.

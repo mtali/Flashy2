@@ -10,3 +10,8 @@ build/
 .cxx
 local.properties
 .migration/
+
+# Release signing — never commit
+keystore.properties
+*.keystore
+*.jks
