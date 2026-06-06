@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="flashlight">ไฟฉาย</string>
-    <string name="settings">ตั้งค่า</string>
-    <string name="general">ทั่วไป</string>
-    <string name="appearance">รูปร่าง</string>
-    <string name="cannot_access_camera">ไม่สามารถเข้าถึงกล้องได้ มีแอปอื่นใช้งานอยู่?</string>
-    <string name="app_name">Flashy</string>
-</resources>

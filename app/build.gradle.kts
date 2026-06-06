@@ -50,6 +50,12 @@ android {
     }
   }
 
+  // English-only app: also strip bundled library (AndroidX/Compose) translations from the APK so
+  // nothing falls back to a non-English locale.
+  androidResources {
+    localeFilters += "en"
+  }
+
   buildTypes {
     release {
       isMinifyEnabled = true
